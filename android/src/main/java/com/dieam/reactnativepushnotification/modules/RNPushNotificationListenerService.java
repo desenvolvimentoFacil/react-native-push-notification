@@ -7,6 +7,8 @@ import com.google.firebase.messaging.RemoteMessage;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Application;
+import android.content.Context;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,6 +19,7 @@ import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
+import com.google.android.gms.gcm.GcmListenerService;
 
 import org.json.JSONObject;
 
@@ -130,6 +133,10 @@ public class RNPushNotificationListenerService extends FirebaseMessagingService 
 
         Log.v(LOG_TAG, "sendNotification: " + bundle);
 
+		AudioManager am;
+		am= (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
+		am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+        
         Application applicationContext = (Application) context.getApplicationContext();
         RNPushNotificationHelper pushNotificationHelper = new RNPushNotificationHelper(applicationContext);
         pushNotificationHelper.sendToNotificationCentre(bundle);
