@@ -249,6 +249,7 @@ PushNotification.localNotification({
     priority: "high", // (optional) set notification priority, default: high
     visibility: "private", // (optional) set notification visibility, default: private
     importance: "high", // (optional) set notification importance, default: high
+	alwaysFireSound: false, // (otional) will play sound even if phone is on silent or vibrate mode, default: false
 
     /* iOS only properties */
     alertAction: // (optional) default: view
