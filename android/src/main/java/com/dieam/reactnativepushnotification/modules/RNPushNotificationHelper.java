@@ -38,6 +38,7 @@ public class RNPushNotificationHelper {
     private static final long DEFAULT_VIBRATION = 300L;
     private static final String NOTIFICATION_CHANNEL_ID = "rn-push-notification-channel-id";
 
+	private int ringerMode = -1;
     private Context context;
     private RNPushNotificationConfig config;
     private final SharedPreferences scheduledNotificationsPersistence;
@@ -135,10 +136,6 @@ public class RNPushNotificationHelper {
 
     public void sendToNotificationCentre(Bundle bundle) {
         try {
-			Application applicationContext = (Application) context;
-			AudioManager am;
-			am= (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
-			
             Class intentClass = getMainActivityClass();
             if (intentClass == null) {
                 Log.e(LOG_TAG, "No activity class found for the notification");
@@ -303,6 +300,11 @@ public class RNPushNotificationHelper {
                         soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + resId);
                     }
                 }
+				String soundPath = bundle.getString("soundPath");
+				if (soundPath != null) {
+					soundUri = Uri.parse(soundPath);
+				}
+				
                 notification.setSound(soundUri);
             }
 
@@ -311,6 +313,10 @@ public class RNPushNotificationHelper {
             }
 
 			if (bundle.containsKey("alwaysFireSound") && bundle.getBoolean("alwaysFireSound")) {
+				Application applicationContext = (Application) context;
+				AudioManager am;
+				am= (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
+				ringerMode = am.getRingerMode();
                 am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
             }
 			
@@ -466,6 +472,13 @@ public class RNPushNotificationHelper {
     public void clearNotifications() {
         Log.i(LOG_TAG, "Clearing alerts from the notification centre");
 
+		if (ringerMode > -1) {
+			Application applicationContext = (Application) context;
+			AudioManager am;
+			am= (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
+			am.setRingerMode(ringerMode);
+		}
+		
         NotificationManager notificationManager = notificationManager();
         notificationManager.cancelAll();
     }
