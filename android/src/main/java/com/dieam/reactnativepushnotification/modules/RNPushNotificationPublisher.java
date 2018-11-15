@@ -19,7 +19,7 @@ public class RNPushNotificationPublisher extends BroadcastReceiver {
         Log.i(LOG_TAG, "NotificationPublisher: Prepare To Publish: " + id + ", Now Time: " + currentTime);
 
         Application applicationContext = (Application) context.getApplicationContext();
-
+		
         new RNPushNotificationHelper(applicationContext)
                 .sendToNotificationCentre(intent.getExtras());
     }

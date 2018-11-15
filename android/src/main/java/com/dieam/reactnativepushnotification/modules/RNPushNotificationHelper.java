@@ -7,6 +7,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.media.AudioManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -134,6 +135,10 @@ public class RNPushNotificationHelper {
 
     public void sendToNotificationCentre(Bundle bundle) {
         try {
+			Application applicationContext = (Application) context;
+			AudioManager am;
+			am= (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
+			
             Class intentClass = getMainActivityClass();
             if (intentClass == null) {
                 Log.e(LOG_TAG, "No activity class found for the notification");
@@ -305,6 +310,10 @@ public class RNPushNotificationHelper {
                 notification.setOngoing(bundle.getBoolean("ongoing"));
             }
 
+			if (bundle.containsKey("alwaysFireSound") && bundle.getBoolean("alwaysFireSound")) {
+                am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            }
+			
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 notification.setCategory(NotificationCompat.CATEGORY_CALL);
 

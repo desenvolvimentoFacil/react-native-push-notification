@@ -3,6 +3,7 @@ package com.dieam.reactnativepushnotification.modules;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Application;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -114,7 +115,7 @@ public class RNPushNotificationListenerServiceGcm extends GcmListenerService {
 
         if (!isForeground) {
             Application applicationContext = (Application) context.getApplicationContext();
-            RNPushNotificationHelper pushNotificationHelper = new RNPushNotificationHelper(applicationContext);
+			RNPushNotificationHelper pushNotificationHelper = new RNPushNotificationHelper(applicationContext);
             pushNotificationHelper.sendToNotificationCentre(bundle);
         }
     }
