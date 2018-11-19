@@ -249,7 +249,9 @@ PushNotification.localNotification({
     priority: "high", // (optional) set notification priority, default: high
     visibility: "private", // (optional) set notification visibility, default: private
     importance: "high", // (optional) set notification importance, default: high
-	alwaysFireSound: false, // (otional) will play sound even if phone is on silent or vibrate mode, default: false
+	alwaysFireSound: false, // (optional) will play sound even if phone is on silent or vibrate mode, default: false
+	volume: 0.5, // (optional) volume of the notification sound. Will only work if "alwaysFireSound" is enabled
+	soundPath: '', // (optional) local path of a sound, not necessarily within the app 
 
     /* iOS only properties */
     alertAction: // (optional) default: view

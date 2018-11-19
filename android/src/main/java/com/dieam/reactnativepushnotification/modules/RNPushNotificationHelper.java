@@ -304,7 +304,7 @@ public class RNPushNotificationHelper {
 				if (soundPath != null) {
 					soundUri = Uri.parse(soundPath);
 				}
-				
+								
                 notification.setSound(soundUri);
             }
 
@@ -315,9 +315,21 @@ public class RNPushNotificationHelper {
 			if (bundle.containsKey("alwaysFireSound") && bundle.getBoolean("alwaysFireSound")) {
 				Application applicationContext = (Application) context;
 				AudioManager am;
-				am= (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
+				am = (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
 				ringerMode = am.getRingerMode();
                 am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+				
+				String volume = bundle.getString("volume");
+				if (volume != null) {
+					try
+				    {
+						double convertedVolume = Double.parseDouble(volume);
+						int maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+						int newVolume = (int) (maxVolume*convertedVolume);
+						am.setStreamVolume(AudioManager.STREAM_NOTIFICATION, newVolume, 0);
+					}
+					catch(NumberFormatException nfe) { }
+				}
             }
 			
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
