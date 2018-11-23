@@ -22,6 +22,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.provider.DocumentsContract;
+import android.content.ContentUris;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.database.Cursor;
 
 import com.facebook.react.bridge.ReadableMap;
 
@@ -300,10 +305,13 @@ public class RNPushNotificationHelper {
                         soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + resId);
                     }
                 }
-				String soundPath = bundle.getString("soundPath");
-				if (soundPath != null) {
-					soundUri = Uri.parse(soundPath);
-				}
+				
+				try {
+					String soundPath = bundle.getString("soundPath");
+					if (soundPath != null) {
+						soundUri = Uri.parse(soundPath);
+					}
+				} catch (Exception exc) { }
 								
                 notification.setSound(soundUri);
             }
@@ -314,6 +322,14 @@ public class RNPushNotificationHelper {
 
 			if (bundle.containsKey("alwaysFireSound") && bundle.getBoolean("alwaysFireSound")) {
 				Application applicationContext = (Application) context;
+
+				try
+				{
+					NotificationManager mNotificationManager = (NotificationManager) applicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
+					mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+				}
+				catch(Exception exp) { }
+				
 				AudioManager am;
 				am = (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
 				ringerMode = am.getRingerMode();
