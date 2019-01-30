@@ -304,7 +304,6 @@ public class RNPushNotificationHelper {
                             resId = context.getResources().getIdentifier(soundName, "raw", context.getPackageName());
                         }
 
-						Log.i(LOG_TAG, "******************************************\r\n******************************************\r\n******************************************\r\nSOUND NAME 1: " + "android.resource://" + context.getPackageName() + "/" + resId);
                         soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + resId);
                     }
                 }
@@ -316,7 +315,6 @@ public class RNPushNotificationHelper {
 					}
 				} catch (Exception exc) { }
 								
-				Log.i(LOG_TAG, "******************************************\r\n******************************************\r\n******************************************\r\nSOUND NAME 2: " + soundUri);
                 notification.setSound(soundUri);
             }
 
@@ -330,15 +328,14 @@ public class RNPushNotificationHelper {
 				try
 				{
 					NotificationManager mNotificationManager = (NotificationManager) applicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
-					Log.i(LOG_TAG, "Vai remover o não perturbe");
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !mNotificationManager.isNotificationPolicyAccessGranted()) {
-						Log.i(LOG_TAG, "Não tem permissão para remover o não perturbe");
+						Log.i(LOG_TAG, "Doesn't have permission to remove 'Do not disturb'");
 					}
 					
 					mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
 				}
 				catch(Exception exp) {
-					Log.e(LOG_TAG, "Não tem permissão para remover o não perturbe", exp);
+					Log.e(LOG_TAG, "Doesn't have permission to remove 'Do not disturb'", exp);
 				}
 				
 				AudioManager am;
