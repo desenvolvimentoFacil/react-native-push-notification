@@ -1,6 +1,6 @@
 package com.dieam.reactnativepushnotification.modules;
 
-
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.Application;
 import android.app.Notification;
@@ -16,6 +16,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -284,8 +285,9 @@ public class RNPushNotificationHelper {
             bundle.putBoolean("userInteraction", true);
             intent.putExtra("notification", bundle);
 
+			Uri soundUri = null;
             if (!bundle.containsKey("playSound") || bundle.getBoolean("playSound")) {
-                Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
                 String soundName = bundle.getString("soundName");
                 if (soundName != null) {
                     if (!"default".equalsIgnoreCase(soundName)) {
@@ -302,6 +304,7 @@ public class RNPushNotificationHelper {
                             resId = context.getResources().getIdentifier(soundName, "raw", context.getPackageName());
                         }
 
+						Log.i(LOG_TAG, "******************************************\r\n******************************************\r\n******************************************\r\nSOUND NAME 1: " + "android.resource://" + context.getPackageName() + "/" + resId);
                         soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + resId);
                     }
                 }
@@ -313,6 +316,7 @@ public class RNPushNotificationHelper {
 					}
 				} catch (Exception exc) { }
 								
+				Log.i(LOG_TAG, "******************************************\r\n******************************************\r\n******************************************\r\nSOUND NAME 2: " + soundUri);
                 notification.setSound(soundUri);
             }
 
@@ -326,14 +330,21 @@ public class RNPushNotificationHelper {
 				try
 				{
 					NotificationManager mNotificationManager = (NotificationManager) applicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
+					Log.i(LOG_TAG, "Vai remover o não perturbe");
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !mNotificationManager.isNotificationPolicyAccessGranted()) {
+						Log.i(LOG_TAG, "Não tem permissão para remover o não perturbe");
+					}
+					
 					mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
 				}
-				catch(Exception exp) { }
+				catch(Exception exp) {
+					Log.e(LOG_TAG, "Não tem permissão para remover o não perturbe", exp);
+				}
 				
 				AudioManager am;
 				am = (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
-				ringerMode = am.getRingerMode();
                 am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+				ringerMode = am.getRingerMode();
 				
 				String volume = bundle.getString("volume");
 				if (volume != null) {
@@ -348,25 +359,13 @@ public class RNPushNotificationHelper {
 				}
             }
 			
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                notification.setCategory(NotificationCompat.CATEGORY_CALL);
-
-                String color = bundle.getString("color");
-                int defaultColor = this.config.getNotificationColor();
-                if (color != null) {
-                    notification.setColor(Color.parseColor(color));
-                } else if (defaultColor != -1) {
-                    notification.setColor(defaultColor);
-                }
-            }
-
             int notificationID = Integer.parseInt(notificationIdString);
 
             PendingIntent pendingIntent = PendingIntent.getActivity(context, notificationID, intent,
                     PendingIntent.FLAG_UPDATE_CURRENT);
 
             NotificationManager notificationManager = notificationManager();
-            checkOrCreateChannel(notificationManager);
+            checkOrCreateChannel(notificationManager, soundUri);
 
             notification.setContentIntent(pendingIntent);
 
@@ -578,7 +577,7 @@ public class RNPushNotificationHelper {
     }
 
     private static boolean channelCreated = false;
-    private void checkOrCreateChannel(NotificationManager manager) {
+    private void checkOrCreateChannel(NotificationManager manager, Uri soundUri) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             return;
         if (channelCreated)
@@ -619,11 +618,18 @@ public class RNPushNotificationHelper {
             }
         }
 
-        NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, this.config.getChannelName(), importance);
+        NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, this.config.getChannelName() != null ? this.config.getChannelName() : "rn-push-notification-channel", importance);
+
+
         channel.setDescription(this.config.getChannelDescription());
         channel.enableLights(true);
         channel.enableVibration(true);
-
+		
+		AudioAttributes attributes = new AudioAttributes.Builder()
+		.setUsage(AudioAttributes.USAGE_NOTIFICATION)
+		.build();
+		channel.setSound(soundUri, attributes);
+		
         manager.createNotificationChannel(channel);
         channelCreated = true;
     }
