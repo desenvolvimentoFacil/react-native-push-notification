@@ -7,7 +7,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.media.AudioManager;
+import android.media.AudioManager; 
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -21,7 +21,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 import android.util.Log;
 import android.provider.DocumentsContract;
 import android.content.ContentUris;
@@ -35,6 +35,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 import static com.dieam.reactnativepushnotification.modules.RNPushNotification.LOG_TAG;
 import static com.dieam.reactnativepushnotification.modules.RNPushNotificationAttributes.fromJson;
@@ -44,7 +47,7 @@ public class RNPushNotificationHelper {
     private static final long DEFAULT_VIBRATION = 300L;
     private static final String NOTIFICATION_CHANNEL_ID = "rn-push-notification-channel-id";
 
-	private int ringerMode = -1;
+    private int ringerMode = -1;
     private Context context;
     private RNPushNotificationConfig config;
     private final SharedPreferences scheduledNotificationsPersistence;
@@ -285,7 +288,7 @@ public class RNPushNotificationHelper {
             bundle.putBoolean("userInteraction", true);
             intent.putExtra("notification", bundle);
 
-			Uri soundUri = null;
+            Uri soundUri = null;
             if (!bundle.containsKey("playSound") || bundle.getBoolean("playSound")) {
                 soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
                 String soundName = bundle.getString("soundName");
@@ -307,14 +310,14 @@ public class RNPushNotificationHelper {
                         soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + resId);
                     }
                 }
-				
-				try {
-					String soundPath = bundle.getString("soundPath");
-					if (soundPath != null) {
-						soundUri = Uri.parse(soundPath);
-					}
-				} catch (Exception exc) { }
-								
+                
+                try {
+                    String soundPath = bundle.getString("soundPath");
+                    if (soundPath != null) {
+                        soundUri = Uri.parse(soundPath);
+                    }
+                } catch (Exception exc) { }
+                
                 notification.setSound(soundUri);
             }
 
@@ -322,40 +325,46 @@ public class RNPushNotificationHelper {
                 notification.setOngoing(bundle.getBoolean("ongoing"));
             }
 
-			if (bundle.containsKey("alwaysFireSound") && bundle.getBoolean("alwaysFireSound")) {
-				Application applicationContext = (Application) context;
-
-				try
-				{
-					NotificationManager mNotificationManager = (NotificationManager) applicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !mNotificationManager.isNotificationPolicyAccessGranted()) {
-						Log.i(LOG_TAG, "Doesn't have permission to remove 'Do not disturb'");
-					}
-					
-					mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-				}
-				catch(Exception exp) {
-					Log.e(LOG_TAG, "Doesn't have permission to remove 'Do not disturb'", exp);
-				}
-				
-				AudioManager am;
-				am = (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
+            if (bundle.containsKey("alwaysFireSound") && bundle.getBoolean("alwaysFireSound")) {
+                Application applicationContext = (Application) context;
+                
+                try
+                {
+                    NotificationManager mNotificationManager = (NotificationManager) applicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
+                    mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+                }
+                catch(Exception exp) { }
+                
+                AudioManager am;
+                am = (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
                 am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-				ringerMode = am.getRingerMode();
-				
-				String volume = bundle.getString("volume");
-				if (volume != null) {
-					try
-				    {
-						double convertedVolume = Double.parseDouble(volume);
-						int maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-						int newVolume = (int) (maxVolume*convertedVolume);
-						am.setStreamVolume(AudioManager.STREAM_NOTIFICATION, newVolume, 0);
-					}
-					catch(NumberFormatException nfe) { }
-				}
+                ringerMode = am.getRingerMode();
+                
+                String volume = bundle.getString("volume");
+                if (volume != null) {
+                    try
+                    {
+                        double convertedVolume = Double.parseDouble(volume);
+                        int maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                        int newVolume = (int) (maxVolume*convertedVolume);
+                        am.setStreamVolume(AudioManager.STREAM_NOTIFICATION, newVolume, 0);
+                    }
+                    catch(NumberFormatException nfe) { }
+                }
             }
-			
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                notification.setCategory(NotificationCompat.CATEGORY_CALL);
+
+                String color = bundle.getString("color");
+                int defaultColor = this.config.getNotificationColor();
+                if (color != null) {
+                    notification.setColor(Color.parseColor(color));
+                } else if (defaultColor != -1) {
+                    notification.setColor(defaultColor);
+                }
+            }
+
             int notificationID = Integer.parseInt(notificationIdString);
 
             PendingIntent pendingIntent = PendingIntent.getActivity(context, notificationID, intent,
@@ -449,7 +458,7 @@ public class RNPushNotificationHelper {
         if (repeatType != null) {
             long fireDate = (long) bundle.getDouble("fireDate");
 
-            boolean validRepeatType = Arrays.asList("time", "week", "day", "hour", "minute").contains(repeatType);
+            boolean validRepeatType = Arrays.asList("time", "month", "week", "day", "hour", "minute").contains(repeatType);
 
             // Sanity checks
             if (!validRepeatType) {
@@ -468,6 +477,26 @@ public class RNPushNotificationHelper {
             switch (repeatType) {
                 case "time":
                     newFireDate = fireDate + repeatTime;
+                    break;
+                case "month":
+                    final Calendar fireDateCalendar = new GregorianCalendar();
+                    fireDateCalendar.setTime(new Date(fireDate));
+                    final int fireDay = fireDateCalendar.get(Calendar.DAY_OF_MONTH);
+                    final int fireMinute = fireDateCalendar.get(Calendar.MINUTE);
+                    final int fireHour = fireDateCalendar.get(Calendar.HOUR_OF_DAY);
+
+                    final Calendar nextEvent = new GregorianCalendar();
+                    nextEvent.setTime(new Date());
+                    final int currentMonth = nextEvent.get(Calendar.MONTH);
+                    int nextMonth = currentMonth < 11 ? (currentMonth + 1) : 0;
+                    nextEvent.set(Calendar.YEAR, nextEvent.get(Calendar.YEAR) + (nextMonth == 0 ? 1 : 0));
+                    nextEvent.set(Calendar.MONTH, nextMonth);
+                    final int maxDay = nextEvent.getActualMaximum(Calendar.DAY_OF_MONTH);
+                    nextEvent.set(Calendar.DAY_OF_MONTH, fireDay <= maxDay ? fireDay : maxDay);
+                    nextEvent.set(Calendar.HOUR_OF_DAY, fireHour);
+                    nextEvent.set(Calendar.MINUTE, fireMinute);
+                    nextEvent.set(Calendar.SECOND, 0);
+                    newFireDate = nextEvent.getTimeInMillis();
                     break;
                 case "week":
                     newFireDate = fireDate + 7 * ONE_DAY;
@@ -496,19 +525,19 @@ public class RNPushNotificationHelper {
     public void clearNotifications() {
         Log.i(LOG_TAG, "Clearing alerts from the notification centre");
 
-		if (ringerMode > -1) {
-			Application applicationContext = (Application) context;
-			AudioManager am;
-			am= (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
-			am.setRingerMode(ringerMode);
-		}
-		
         NotificationManager notificationManager = notificationManager();
         notificationManager.cancelAll();
     }
 
     public void clearNotification(int notificationID) {
         Log.i(LOG_TAG, "Clearing notification: " + notificationID);
+
+        if (ringerMode > -1) {
+            Application applicationContext = (Application) context;
+            AudioManager am;
+            am= (AudioManager) applicationContext.getSystemService(Context.AUDIO_SERVICE);
+            am.setRingerMode(ringerMode);
+        }
 
         NotificationManager notificationManager = notificationManager();
         notificationManager.cancel(notificationID);
@@ -617,16 +646,15 @@ public class RNPushNotificationHelper {
 
         NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, this.config.getChannelName() != null ? this.config.getChannelName() : "rn-push-notification-channel", importance);
 
-
         channel.setDescription(this.config.getChannelDescription());
         channel.enableLights(true);
         channel.enableVibration(true);
-		
-		AudioAttributes attributes = new AudioAttributes.Builder()
-		.setUsage(AudioAttributes.USAGE_NOTIFICATION)
-		.build();
-		channel.setSound(soundUri, attributes);
-		
+
+        AudioAttributes attributes = new AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+        .build();
+        channel.setSound(soundUri, attributes);
+
         manager.createNotificationChannel(channel);
         channelCreated = true;
     }
